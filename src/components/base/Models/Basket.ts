@@ -1,4 +1,12 @@
-import type { IProduct } from "../../../types/index.js"
+
+export interface IProduct {
+    id: string;
+    description: string;
+    image: string;
+    title: string;
+    category: string;
+    price: number | null;
+}
 
 export class Basket {
     private arrayProduct: IProduct[] = [];
@@ -7,7 +15,7 @@ export class Basket {
         return this.arrayProduct
     }
 
-    setProduct(product: IProduct): void {
+    addProduct(product: IProduct): void {
         if (!this.isProductById(product.id)) {
             this.arrayProduct.push(product);
         }

@@ -1,6 +1,6 @@
 import { IBuyer } from "../../../types";
 
-interface TBuyer {
+interface IBuyerModel {
     setSomeDataBuyer(data: Partial<IBuyer>): void;
     getDataBayer(): IBuyer;
     resetDataBuyer(): void;
@@ -14,7 +14,7 @@ const initialStateDataBuyer: IBuyer = {
         address: ''
     };
 
-export class Buyer implements TBuyer {
+export class Buyer implements IBuyerModel {
     private dataBayer: IBuyer = initialStateDataBuyer;
 
     setSomeDataBuyer(data: Partial<IBuyer>): void {

@@ -1,4 +1,4 @@
-import type { IProduct } from "../../../types/index.ts"
+import type { IProduct } from "./Basket";
 
 export class ProductCatalog {
     private arrayItems: IProduct[] = [];
@@ -17,8 +17,8 @@ export class ProductCatalog {
     }
 
     setItemForDisplay(id: string): void {
-        const item = this.arrayItems.find(item => item.id === id);
-        this.selectedItem = item ? item : null;
+        const item = this.getItemById(id);
+        this.selectedItem = item ?? null;
     }
 
     getItemForDisplay(): IProduct | null {
