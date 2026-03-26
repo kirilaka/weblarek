@@ -1,4 +1,4 @@
-import { IProduct } from "../components/base/Models/Basket";
+import { IProduct } from "../components/base/Models/BasketModal";
 
 export type ApiPostMethods = 'POST' | 'PUT' | 'DELETE';
 
@@ -7,7 +7,7 @@ export interface IApi {
     post<T extends object>(uri: string, data: object, method?: ApiPostMethods): Promise<T>;
 }
 
-type TPayment = "card" | "cash" | '';
+export type TPayment = "online" | "offline" | '';
 
 export interface IBuyer {
     payment: TPayment;
@@ -31,3 +31,8 @@ export interface IPostOrderRequest extends IBuyer {
     total: number,
     items: string[]
 } 
+
+export interface IActions {
+    onClick: () => void ;
+}
+

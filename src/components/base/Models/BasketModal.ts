@@ -8,7 +8,7 @@ export interface IProduct {
     price: number | null;
 }
 
-export class Basket {
+export class BasketModal {
     private arrayProduct: IProduct[] = [];
 
     getProducts(): IProduct[] {

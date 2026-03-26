@@ -1,10 +1,12 @@
-import type { IProduct } from "./Basket";
+import type { IProduct } from "./BasketModal";
+import { CDN_URL } from "../../../utils/constants";
 
-export class ProductCatalog {
+export class ProductModal {
     private arrayItems: IProduct[] = [];
     private selectedItem: IProduct | null = null;
 
     setArrayItems(array: IProduct[]): void {
+        array.map(item => item.image = CDN_URL + item.image)
         this.arrayItems = array;
     }
 
