@@ -1,7 +1,7 @@
-import { TPayment } from "../../../types";
-import { ensureElement } from "../../../utils/utils";
-import { Component } from "../Component";
-import { IEvents } from "../Events";
+import { TPayment } from "../../types";
+import { ensureElement } from "../../utils/utils";
+import { Component } from "../base/Component";
+import { IEvents } from "../base/Events";
 
 export interface IForm {
     errorText: string;

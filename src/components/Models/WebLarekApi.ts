@@ -1,7 +1,7 @@
-import { IApi } from "../../../types";
-import { IGetProductsResponse } from "../../../types";
-import { IPostOrderResponse } from "../../../types";
-import { IPostOrderRequest } from "../../../types";
+import { IApi } from "../../types";
+import { IGetProductsResponse } from "../../types";
+import { IPostOrderResponse } from "../../types";
+import { IPostOrderRequest } from "../../types";
 
 export class WebLarekApi {
     private api: IApi;

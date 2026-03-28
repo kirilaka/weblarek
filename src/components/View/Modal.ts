@@ -1,6 +1,6 @@
-import { ensureElement } from "../../../utils/utils";
-import { Component } from "../Component";
-import { IEvents } from "../Events";
+import { ensureElement } from "../../utils/utils";
+import { Component } from "../base/Component";
+import { IEvents } from "../base/Events";
 
 interface IModal {
     content: HTMLElement;
@@ -39,7 +39,6 @@ export class Modal extends Component<IModal> {
     handleEscape = (event: KeyboardEvent) => { 
         if (event.key == 'Escape') { 
             this.close();
-            console.log('dasdasdsa')
         }
     }
 

@@ -1,7 +1,7 @@
-import { ensureElement } from "../../../utils/utils";
-import { Component } from "../Component";
-import { IActions } from "../../../types";
-import { categoryMap } from "../../../utils/constants";
+import { ensureElement } from "../../utils/utils";
+import { Component } from "../base/Component";
+import { IActions } from "../../types";
+import { categoryMap } from "../../utils/constants";
 
 type CategoryKey = keyof typeof categoryMap;
 
@@ -120,13 +120,13 @@ export class CardPreview extends Card<ICardPreview> {
 
     set price(value: number | null) {
         super.price = value
-        
+    }
+
+    setButtonText(value: number | null) {
         if (value === null) {
             this.buttonElement.disabled = true;
             this.buttonElement.textContent = 'Недоступно';
-        } else {
-            this.buttonElement.disabled = false;
-        }
+        } 
     }
 
     InBasket() {

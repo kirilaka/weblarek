@@ -1,7 +1,6 @@
-import { IActions } from "../../../types";
-import { ensureElement } from "../../../utils/utils";
-import { Component } from "../Component";
-import { IEvents } from "../Events";
+import { ensureElement } from "../../utils/utils";
+import { Component } from "../base/Component";
+import { IEvents } from "../base/Events";
 
 export interface IBasket {
     total: number;
@@ -13,7 +12,7 @@ export class Basket extends Component<IBasket> {
     buttonElement: HTMLButtonElement;
     totalElement:HTMLElement;
 
-    constructor(container: HTMLElement, protected events: IEvents, actions?: IActions) {
+    constructor(container: HTMLElement, protected events: IEvents) {
         super(container);
 
         this.containerElement = ensureElement<HTMLElement>('.basket__list', this.container);
@@ -21,7 +20,7 @@ export class Basket extends Component<IBasket> {
         this.totalElement = ensureElement<HTMLElement>('.basket__price', this.container);
 
         this.buttonElement.addEventListener('click', () => {
-            actions?.onClick()
+            events.emit('form:open')
         });
     };
 

@@ -1,4 +1,3 @@
-import { IProduct } from "../components/base/Models/BasketModal";
 
 export type ApiPostMethods = 'POST' | 'PUT' | 'DELETE';
 
@@ -8,6 +7,15 @@ export interface IApi {
 }
 
 export type TPayment = "online" | "offline" | '';
+
+export interface IProduct {
+    id: string;
+    description: string;
+    image: string;
+    title: string;
+    category: string;
+    price: number | null;
+}
 
 export interface IBuyer {
     payment: TPayment;

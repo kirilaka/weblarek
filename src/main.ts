@@ -1,43 +1,53 @@
 import './scss/styles.scss';
-import { ProductModal } from './components/base/Models/ProductModal';
-import { BasketModal, IProduct } from './components/base/Models/BasketModal';
+import { ProductModel } from './components/Models/ProductModel';
+import { BasketModel} from './components/Models/BasketModel';
 import { Api } from './components/base/Api';
-import { BuyerModal } from './components/base/Models/BuyerModal';
+import { BuyerModel } from './components/Models/BuyerModel';
 import { API_URL } from './utils/constants';
-import { IGetProductsResponse } from './types';  
-import { WebLarekApi } from './components/base/Models/WebLarekApi';
+import { WebLarekApi } from './components/Models/WebLarekApi';
 import { EventEmitter } from './components/base/Events';
 import { cloneTemplate, ensureElement } from './utils/utils';
-import { CardBasket, CardCatalog, CardPreview } from './components/base/View/Cards';
-import { Gallery } from './components/base/View/Gallery';
-import { Modal } from './components/base/View/Modal';
-import { Header } from './components/base/View/Header';
-import { Basket } from './components/base/View/Basket';
-import { FormContacts, FormOrder } from './components/base/View/Forms';
-import { OrderSuccess } from './components/base/View/OrderSuccess';
-
-const api = new Api(API_URL);
-const webLarekApi = new WebLarekApi(api)
-const productModal = new ProductModal();
-const basketModal = new BasketModal();
-const buyerModal= new BuyerModal();
-
-const productList: Awaited<IGetProductsResponse> = await webLarekApi.getProducts();
-productModal.setArrayItems(productList.items)
+import { CardBasket, CardCatalog, CardPreview } from './components/View/Cards';
+import { Gallery } from './components/View/Gallery';
+import { Modal } from './components/View/Modal';
+import { Header } from './components/View/Header';
+import { Basket } from './components/View/Basket';
+import { FormContacts, FormOrder } from './components/View/Forms';
+import { OrderSuccess } from './components/View/OrderSuccess';
+import { IProduct } from './types';
 
 const events = new EventEmitter();
+const api = new Api(API_URL);
+const webLarekApi = new WebLarekApi(api)
+const productModel = new ProductModel(events);
+const basketModel = new BasketModel(events);
+const buyerModel= new BuyerModel(events);
+const basket = new Basket(ensureElement(cloneTemplate('#basket')), events)
+
+let isBasketOpen = false;
+
+async function init(): Promise<IProduct[]> {
+    try {
+        const product = await webLarekApi.getProducts()
+        return product.items
+    } catch(error) {
+        throw error
+    }
+}
+
+const productList: IProduct[] = await init();
+
 const gallery = new Gallery(ensureElement('.gallery'))
 const modal = new Modal(ensureElement('.modal'), events)
 const header = new Header(ensureElement('.header'), events)
 
-let clonePreview: CardPreview | null = null
 let orderForm: FormOrder | null = null
 let contactsForm: FormContacts | null = null
 
-events.on('catalog:show', () => {
-    const itemCards = productModal.getArrayItems()?.map((item) => {
+events.on('catalog:change', () => {
+    const itemCards = productModel.getArrayItems()?.map((item) => {
         const card = new CardCatalog(cloneTemplate('#card-catalog'), {
-            onClick: () => events.emit('card:click', item)
+            onClick: () => productModel.setItemForDisplay(item)
         });
         return card.render(item);
     });
@@ -45,169 +55,131 @@ events.on('catalog:show', () => {
     gallery.render({catalog: itemCards})
 })
 
-events.emit('catalog:show');
+productModel.setArrayItems(productList)
 
-events.on('card:click', (item: IProduct) => {
+events.on('card:click', () => {
     modal.clear()
+    const product = productModel.getItemForDisplay()
+    if (!product) return 
     const cardPreview = new CardPreview(cloneTemplate('#card-preview'), {
-        onClick: () => events.emit('add:basket', item)
+        onClick: () => {
+            if(basketModel.isProductById(product.id)) {
+                basketModel.deleteProduct(product)
+                cardPreview.noInBasket()
+                modal.close()
+            } else {
+                basketModel.addProduct(product)
+                cardPreview.InBasket()
+                modal.close()
+            }
+        }
     })
-    const card = cardPreview.render(item)
-
-    if (item.price === null) {
-    } else if (basketModal.isProductById(item.id)) {
+    cardPreview.setButtonText(product.price)
+    const card = cardPreview.render(product)
+    if (basketModel.isProductById(product.id)) {
         cardPreview.InBasket()
     } else {
         cardPreview.noInBasket()
     }
-
     modal.render({content: card})
     modal.open();
-    clonePreview = cardPreview
 })
 
-events.on('add:basket', (item: IProduct) => {
-    if(!basketModal.isProductById(item.id)) {
-        basketModal.addProduct(item)
-        clonePreview?.InBasket()
-    } else {
-        basketModal.deleteProduct(item)
-        clonePreview?.noInBasket()
+events.on('basket:change', () => {
+    header.render({counter: basketModel.getTotalProducts()})
+    if (isBasketOpen) {
+        events.emit('basket:open')
     }
-
-    events.emit('counter:change')
-})
-
-events.on('counter:change', () => {
-    header.render({counter: basketModal.getTotalProducts()})
 })
 
 events.on('basket:open', () => {
+    isBasketOpen = true
     modal.clear()
-    const basket = new Basket(ensureElement(cloneTemplate('#basket')), events, {onClick: () => events.emit('form:open')})
-    const itemBasket = basketModal.getProducts().map((item, index) => {
-        const cardBasket = new CardBasket(ensureElement(cloneTemplate('#card-basket')), {onClick: () => events.emit('basket:del-item', item)})
+    const itemBasket = basketModel.getProducts().map((item, index) => {
+        const cardBasket = new CardBasket(ensureElement(cloneTemplate('#card-basket')), {onClick: () => basketModel.deleteProduct(item)})
         return cardBasket.render({
             ...item,
             index: index + 1
         })
     })
-    const contentBasket = basket.render({basketList: itemBasket, total: basketModal.getPrice()})
+    const contentBasket = basket.render({basketList: itemBasket, total: basketModel.getPrice()})
     modal.render({content: contentBasket})
     modal.open()
 })
 
-events.on('basket:del-item', (item: IProduct) => {
-    basketModal.deleteProduct(item)
-    events.emit('basket:open')
-    events.emit('counter:change')
-})
-
 events.on('form:open', () => {
     modal.clear()
-    const errors = buyerModal.isValidOrder()
     orderForm = new FormOrder(cloneTemplate('#order'), events)
     
     const formElement = orderForm.render({
-        ...buyerModal.getDataBayer(),
-        disabled: Object.keys(errors).length > 0,
-        errorText: Object.values(errors).join(', ')
+        ...buyerModel.getDataBayer(),
     })
 
     modal.render({ content: formElement })
 })
 
-events.on('order:form-update', (errors) => {
-    if (!orderForm) return
+events.on('order:payment-changed', (payment) => {
+    buyerModel.setSomeDataBuyer(payment)
+})
 
-    orderForm.render({
-        disabled: Object.keys(errors).length > 0,
-        errorText: Object.values(errors).join(', ')
+events.on('order:address-changed', (address) => {
+    buyerModel.setSomeDataBuyer(address)
+})
+
+events.on('buyer:change', () => {
+    const allErrors = buyerModel.isValid()
+
+    const orderFields = ['payment', 'address']
+    const contactsFields = ['email', 'phone']
+
+    const errorsOrder = Object.fromEntries(
+        Object.entries(allErrors).filter(([key]) =>
+            orderFields.includes(key)
+        )
+    )
+
+    const errorscontacts = Object.fromEntries(
+        Object.entries(allErrors).filter(([key]) =>
+            contactsFields.includes(key)
+        )
+    )
+
+    orderForm?.render({
+        ...buyerModel.getDataBayer(),
+        disabled: Object.keys(errorsOrder).length > 0,
+        errorText: Object.values(errorsOrder).join(', ')
+    })
+
+    contactsForm?.render({
+        ...buyerModel.getDataBayer(),
+        disabled: Object.keys(errorscontacts).length > 0,
+        errorText: Object.values(errorscontacts).join(', ')
     })
 })
 
 events.on('order:next-form', () => {
-    const errors = buyerModal.isValidOrder()
-    if (Object.keys(errors).length > 0) {
-        events.emit('form:validate')
-        return
-    }
-
-    modal.clear()
-
-    const contactErrors = buyerModal.isValidContacts()
-
     contactsForm = new FormContacts(cloneTemplate('#contacts'), events)
 
     const formElement = contactsForm.render({
-        ...buyerModal.getDataBayer(),
-        disabled: Object.keys(contactErrors).length > 0,
-        errorText: Object.values(contactErrors).join(', ')
+        ...buyerModel.getDataBayer(),
     })
 
     modal.render({ content: formElement })
 })
 
-events.on('order:address-changed', (data) => {
-    buyerModal.setSomeDataBuyer(data)
-
-    const errors = buyerModal.isValidOrder()
-    events.emit('order:form-update', errors)
+events.on('order:email-changed', (email) => {
+    buyerModel.setSomeDataBuyer(email)
 })
 
-events.on('order:payment-changed', (data) => {
-    buyerModal.setSomeDataBuyer(data)
-
-    const errors = buyerModal.isValidOrder()
-    events.emit('order:form-update', errors)
+events.on('order:phone-changed', (phone) => {
+    buyerModel.setSomeDataBuyer(phone)
 })
 
-events.on('order:form-update', () => { 
-    orderForm?.render(buyerModal.getDataBayer())
-})
-
-events.on('order:email-changed', (data) => {
-    buyerModal.setSomeDataBuyer(data)
-
-    const errors = buyerModal.isValidContacts()
-    events.emit('contacts:form-update', errors)
-})
-
-events.on('order:phone-changed', (data) => {
-    buyerModal.setSomeDataBuyer(data)
-
-    const errors = buyerModal.isValidContacts()
-    events.emit('contacts:form-update', errors)
-})
-
-events.on('contacts:form-update', (errors) => {
-    if (!contactsForm) return
-
-    contactsForm.render({
-        ...buyerModal.getDataBayer(),
-        disabled: Object.keys(errors).length > 0,
-        errorText: Object.values(errors).join(', ')
-    })
-})
-
-events.on('order:submit', () => {
-    const errors = buyerModal.isValidContacts()
-
-    if (Object.keys(errors).length > 0) {
-        events.emit('contacts:form-update', errors)
-        return
-    }
-
-    events.emit('request:send')
-    buyerModal.resetDataBuyer()
-    events.emit('counter:change')
-})
-
-events.on('request:send', async () => {
+events.on('order:submit', async () => {
     try {
-        const dataBayer = buyerModal.getDataBayer()
-        const total = basketModal.getPrice()
-        const items = basketModal.getIdsProducts()
+        const dataBayer = buyerModel.getDataBayer()
+        const total = basketModel.getPrice()
+        const items = basketModel.getIdsProducts()
 
         const postData = { ...dataBayer, total, items }
 
@@ -220,14 +192,16 @@ events.on('request:send', async () => {
 })
 
 events.on('success:open', (response) => {
+    isBasketOpen = false
     const orderSuccess = new OrderSuccess(ensureElement(cloneTemplate('#success')), events)
     const successElement = orderSuccess.render(response)
     modal.render({content: successElement})
     modal.open()
-    basketModal.emptyBasket()
-    events.emit('counter:change')
+    basketModel.emptyBasket()
+    buyerModel.resetDataBuyer()
 })
 
 events.on('order-success:close', () => {
+    isBasketOpen = false
     modal.close()
 })

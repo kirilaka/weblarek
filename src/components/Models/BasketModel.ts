@@ -1,15 +1,10 @@
+import { IProduct } from "../../types";
+import { IEvents } from "../base/Events";
 
-export interface IProduct {
-    id: string;
-    description: string;
-    image: string;
-    title: string;
-    category: string;
-    price: number | null;
-}
-
-export class BasketModal {
+export class BasketModel {
     private arrayProduct: IProduct[] = [];
+
+    constructor(protected events: IEvents) {}
 
     getProducts(): IProduct[] {
         return this.arrayProduct
@@ -19,6 +14,7 @@ export class BasketModal {
         if (!this.isProductById(product.id)) {
             this.arrayProduct.push(product);
         }
+        this.events.emit('basket:change')
     }
 
     deleteProduct(product: IProduct): void {
@@ -26,10 +22,12 @@ export class BasketModal {
         if (index !== -1) {
             this.arrayProduct.splice(index, 1);
         }
+        this.events.emit('basket:change')
     }
 
     emptyBasket(): void {
         this.arrayProduct = []
+        this.events.emit('basket:change')
     }
 
     getPrice(): number {
