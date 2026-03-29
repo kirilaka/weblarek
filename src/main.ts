@@ -26,23 +26,25 @@ const basket = new Basket(ensureElement(cloneTemplate('#basket')), events)
 
 let isBasketOpen = false;
 
-async function init(): Promise<IProduct[]> {
+async function init() {
     try {
-        const product = await webLarekApi.getProducts()
-        return product.items
+        productModel.setArrayItems((await webLarekApi.getProducts()).items)
     } catch(error) {
+        console.error(error)
         throw error
     }
 }
 
-const productList: IProduct[] = await init();
+init()
 
 const gallery = new Gallery(ensureElement('.gallery'))
 const modal = new Modal(ensureElement('.modal'), events)
 const header = new Header(ensureElement('.header'), events)
+const cardPreview = new CardPreview(cloneTemplate('#card-preview'), events)
 
-let orderForm: FormOrder | null = null
-let contactsForm: FormContacts | null = null
+const orderForm = new FormOrder(cloneTemplate('#order'), events)
+const contactsForm = new FormContacts(cloneTemplate('#contacts'), events)
+const orderSuccess = new OrderSuccess(ensureElement(cloneTemplate('#success')), events)
 
 events.on('catalog:change', () => {
     const itemCards = productModel.getArrayItems()?.map((item) => {
@@ -55,25 +57,10 @@ events.on('catalog:change', () => {
     gallery.render({catalog: itemCards})
 })
 
-productModel.setArrayItems(productList)
-
 events.on('card:click', () => {
     modal.clear()
     const product = productModel.getItemForDisplay()
     if (!product) return 
-    const cardPreview = new CardPreview(cloneTemplate('#card-preview'), {
-        onClick: () => {
-            if(basketModel.isProductById(product.id)) {
-                basketModel.deleteProduct(product)
-                cardPreview.noInBasket()
-                modal.close()
-            } else {
-                basketModel.addProduct(product)
-                cardPreview.InBasket()
-                modal.close()
-            }
-        }
-    })
     cardPreview.setButtonText(product.price)
     const card = cardPreview.render(product)
     if (basketModel.isProductById(product.id)) {
@@ -83,6 +70,18 @@ events.on('card:click', () => {
     }
     modal.render({content: card})
     modal.open();
+})
+
+events.on('preview:toggle', () => {
+    const product = productModel.getItemForDisplay()
+    if (!product) return 
+    if(basketModel.isProductById(product.id)) {
+        basketModel.deleteProduct(product)
+        modal.close()
+    } else {
+        basketModel.addProduct(product)
+        modal.close()
+    }
 })
 
 events.on('basket:change', () => {
@@ -102,6 +101,7 @@ events.on('basket:open', () => {
             index: index + 1
         })
     })
+    basket.disabled(basketModel.getPrice()) 
     const contentBasket = basket.render({basketList: itemBasket, total: basketModel.getPrice()})
     modal.render({content: contentBasket})
     modal.open()
@@ -109,12 +109,9 @@ events.on('basket:open', () => {
 
 events.on('form:open', () => {
     modal.clear()
-    orderForm = new FormOrder(cloneTemplate('#order'), events)
-    
     const formElement = orderForm.render({
         ...buyerModel.getDataBayer(),
     })
-
     modal.render({ content: formElement })
 })
 
@@ -138,32 +135,33 @@ events.on('buyer:change', () => {
         )
     )
 
-    const errorscontacts = Object.fromEntries(
+    const errorsContacts = Object.fromEntries(
         Object.entries(allErrors).filter(([key]) =>
             contactsFields.includes(key)
         )
     )
 
+    const buyer = buyerModel.getDataBayer()
+    orderForm.address = buyer.address
+    orderForm.payment = buyer.payment
+    contactsForm.email = buyer.email
+    contactsForm.phone = buyer.phone
+
     orderForm?.render({
-        ...buyerModel.getDataBayer(),
         disabled: Object.keys(errorsOrder).length > 0,
         errorText: Object.values(errorsOrder).join(', ')
     })
 
     contactsForm?.render({
-        ...buyerModel.getDataBayer(),
-        disabled: Object.keys(errorscontacts).length > 0,
-        errorText: Object.values(errorscontacts).join(', ')
+        disabled: Object.keys(errorsContacts).length > 0,
+        errorText: Object.values(errorsContacts).join(', ')
     })
 })
 
 events.on('order:next-form', () => {
-    contactsForm = new FormContacts(cloneTemplate('#contacts'), events)
-
     const formElement = contactsForm.render({
         ...buyerModel.getDataBayer(),
     })
-
     modal.render({ content: formElement })
 })
 
@@ -179,7 +177,10 @@ events.on('order:submit', async () => {
     try {
         const dataBayer = buyerModel.getDataBayer()
         const total = basketModel.getPrice()
-        const items = basketModel.getIdsProducts()
+        const items = basketModel.getProducts().reduce((acc, item) => {
+            acc.push(item.id);
+            return acc;
+        },[] as string[])
 
         const postData = { ...dataBayer, total, items }
 
@@ -193,7 +194,6 @@ events.on('order:submit', async () => {
 
 events.on('success:open', (response) => {
     isBasketOpen = false
-    const orderSuccess = new OrderSuccess(ensureElement(cloneTemplate('#success')), events)
     const successElement = orderSuccess.render(response)
     modal.render({content: successElement})
     modal.open()

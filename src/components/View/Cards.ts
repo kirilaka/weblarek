@@ -2,6 +2,7 @@ import { ensureElement } from "../../utils/utils";
 import { Component } from "../base/Component";
 import { IActions } from "../../types";
 import { categoryMap } from "../../utils/constants";
+import { IEvents } from "../base/Events";
 
 type CategoryKey = keyof typeof categoryMap;
 
@@ -85,7 +86,7 @@ export class CardPreview extends Card<ICardPreview> {
     categoryElement: HTMLElement;
     imageElement: HTMLImageElement;
 
-    constructor(container: HTMLElement, actions?: IActions) {
+    constructor(container: HTMLElement, events: IEvents) {
         super(container);
 
         this.descriptionElement = ensureElement<HTMLElement>('.card__text', this.container);
@@ -93,9 +94,9 @@ export class CardPreview extends Card<ICardPreview> {
         this.categoryElement = ensureElement<HTMLElement>('.card__category', this.container);
         this.imageElement = ensureElement<HTMLImageElement>('.card__image', this.container);
 
-        if(actions?.onClick) {
-            this.buttonElement.addEventListener('click', actions.onClick);
-        };
+        this.buttonElement.addEventListener('click', () => {
+            events.emit('preview:toggle')
+        });
     };
 
     set description(value: string) {
@@ -118,22 +119,22 @@ export class CardPreview extends Card<ICardPreview> {
         this.setImage(this.imageElement, value, this.title)
     }
 
-    set price(value: number | null) {
-        super.price = value
-    }
-
     setButtonText(value: number | null) {
         if (value === null) {
             this.buttonElement.disabled = true;
             this.buttonElement.textContent = 'Недоступно';
-        } 
+        } else {
+            this.buttonElement.disabled = false;
+        }
     }
 
     InBasket() {
+        if (this.buttonElement.disabled) return;
         this.buttonElement.textContent = 'Удалить из корзины'
     }
 
     noInBasket() {
+        if (this.buttonElement.disabled) return;
         this.buttonElement.textContent = 'В корзину'
     }
 }

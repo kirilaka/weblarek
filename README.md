@@ -206,3 +206,212 @@ Presenter - презентер содержит основную логику п
 Методы:
 `getProducts(): Promise<IGetProductsResponse>` - выполняет GET запрос и позвращает промис масива.
 `postOrder(data: IPostOrderRequest): Promise<IPostOrderResponse>` - выполняет POST запрос на переданный в параметрах обект и возвращает промис обекта с сервера.
+
+###### Классы представления
+
+###### Класс Basket
+Отвечает за отображение корзины товаров.
+
+конструктор:
+`constructor(container: HTMLElement, protected events: IEvents)` - принимает корневой DOM элемент и объект EventEmitter для подписки и эмита событий
+
+Поля класса:
+`containerElement: HTMLElement` — контейнер списка товаров
+`buttonElement: HTMLButtonElement` — кнопка оформления заказа
+`totalElement: HTMLElement` — элемент отображения общей стоимости
+
+Методы:
+`set basketList(items: HTMLElement[]): void` — отображает список товаров в корзине
+`set total(value: number): void` — устанавливает общую стоимость товаров
+`disabled(value: number): void` — блокирует кнопку оформления, если корзина пуста
+
+События:
+`form:open` — открытие формы оформления заказа
+
+###### Абстрактный класс Card
+Базовый класс для карточек товаров.
+
+конструктор:
+`constructor(container: HTMLElement)` - принимает корневой DOM элемент
+
+Поля класса:
+`titleElement: HTMLElement` — элемент заголовка
+`priceElement: HTMLElement` — элемент цены
+
+Методы:
+`set title(value: string): void` — устанавливает название товара
+`set price(value: number | null): void` — отображает цену или "Бесценно", если цена отсутствует
+
+###### Класс CardCatalog
+Карточка товара в каталоге.
+
+конструктор:
+`constructor(container: HTMLElement, actions?: IActions)` - принимает корневой DOM элемент и обьект с колбеком onClick
+
+Поля класса:
+`categoryElement: HTMLElement` — элемент категории
+`imageElement: HTMLImageElement` — изображение товара
+
+Методы:
+`set category(value: string): void` — устанавливает категорию и соответствующий CSS-класс
+`set image(value: string): void` — устанавливает изображение
+
+События:
+`onClick` — выбор товара для просмотра
+
+###### Класс CardPreview
+Карточка подробного просмотра товара (в модальном окне).
+
+конструктор:
+`constructor(container: HTMLElement, protected events: IEvents)` - принимает корневой DOM элемент и объект EventEmitter для подписки и эмита событий
+
+Поля класса:
+`descriptionElement: HTMLElement` — описание товара
+`buttonElement: HTMLButtonElement` — кнопка добавления в корзину
+`categoryElement: HTMLElement` — категория
+`imageElement: HTMLImageElement` — изображение
+
+Методы:
+`set description(value: string): void` — устанавливает описание
+`set category(value: string): void` — устанавливает категорию
+`set image(value: string): void` — устанавливает изображение
+`setButtonText(value: number | null): void` — управляет состоянием кнопки (disabled и текст)
+`InBasket(): void` — меняет текст кнопки на "Удалить из корзины"
+`noInBasket(): void` — меняет текст кнопки на "В корзину"
+
+События:
+`preview:toggle` — добавление/удаление товара из корзины
+
+###### Класс CardBasket
+Карточка товара в корзине.
+
+конструктор:
+`constructor(container: HTMLElement, actions?: IActions)` - принимает корневой DOM элемент и обьект с колбеком onClick
+
+Поля класса:
+`buttonBasketElement: HTMLButtonElement` — кнопка удаления товара
+`indexElement: HTMLElement` — порядковый номер товара
+
+Методы:
+`set index(value: number): void` — устанавливает номер товара в списке
+
+События:
+`onClick` — удаление товара из корзины
+
+###### Абстрактный класс Form
+Базовый класс для форм.
+
+конструктор:
+`constructor(container: HTMLElement, protected events: IEvents)` - принимает корневой DOM элемент и объект EventEmitter для подписки и эмита событий
+
+Поля класса:
+`submitButtonElement: HTMLButtonElement` — кнопка отправки формы
+`errorElement: HTMLElement` — элемент отображения ошибок
+
+Методы:
+`set errorText(value: string): void` — отображает текст ошибки
+`set disabled(value: boolean): void` — управляет доступностью кнопки отправки
+
+###### Класс FormOrder
+Форма выбора способа оплаты и адреса доставки.
+
+конструктор:
+`constructor(container: HTMLElement, protected events: IEvents)` - принимает корневой DOM элемент и объект EventEmitter для подписки и эмита событий
+
+Поля класса:
+`cardButtonElement: HTMLButtonElement` — кнопка оплаты онлайн
+`cashButtonElement: HTMLButtonElement` — кнопка оплаты при получении
+`addressElement: HTMLInputElement` — поле ввода адреса
+
+Методы:
+`set payment(value: TPayment): void` — устанавливает выбранный способ оплаты
+`set address(value: string): void` — устанавливает адрес
+
+События:
+`order:payment-changed` — изменение способа оплаты
+`order:address-changed` — изменение адреса
+`order:next-form` — переход к следующему шагу
+
+###### Класс FormContacts
+Форма ввода контактных данных.
+
+конструктор:
+`constructor(container: HTMLElement, protected events: IEvents)` - принимает корневой DOM элемент и объект EventEmitter для подписки и эмита событий
+
+Поля класса:
+`emailElement: HTMLInputElement` — поле email
+`phoneElement: HTMLInputElement` — поле телефона
+
+Методы:
+`set email(value: string): void` — устанавливает email
+`set phone(value: string): void` — устанавливает телефон
+
+События:
+`order:email-changed` — изменение email
+`order:phone-changed` — изменение телефона
+`order:submit` — отправка заказа
+
+###### Класс Gallery
+Отвечает за отображение списка товаров.
+
+конструктор:
+`constructor(container: HTMLElement)` - принимает корневой DOM элемент
+
+Методы:
+`set catalog(items: HTMLElement[]): void` — отображает карточки товаров
+
+###### Класс Header
+Отвечает за отображение шапки сайта.
+
+конструктор:
+`constructor(container: HTMLElement, protected events: IEvents)` - принимает корневой DOM элемент и объект EventEmitter для подписки и эмита событий
+
+Поля класса:
+`counterElement: HTMLElement` — счетчик товаров в корзине
+`buttonBasketElement: HTMLButtonElement` — кнопка открытия корзины
+
+Методы:
+`set counter(value: number): void` — обновляет количество товаров
+
+События:
+`basket:open` — открытие корзины
+
+###### Класс Modal
+Отвечает за отображение модальных окон.
+
+конструктор:
+`constructor(container: HTMLElement, protected events: IEvents)` - принимает корневой DOM элемент и объект EventEmitter для подписки и эмита событий
+
+Поля класса:
+`closeButtonElement: HTMLButtonElement` — кнопка закрытия
+`modalContainer: HTMLElement` — контейнер контента
+
+Методы:
+`set content(value: HTMLElement): void` — устанавливает содержимое
+`clear(): void` — очищает содержимое
+`open(): void` — открывает модальное окно
+`close(): void` — закрывает модальное окно
+
+Обрабатывает:
+
+клик по кнопке закрытия
+
+клик по оверлею
+
+нажатие Escape
+
+###### Класс OrderSuccess
+Отображает сообщение об успешном оформлении заказа.
+
+конструктор:
+`constructor(container: HTMLElement, protected events: IEvents)` - принимает корневой DOM элемент и объект EventEmitter для подписки и эмита событий
+
+Поля класса:
+`totalElement: HTMLElement` — отображение суммы заказа
+`buttonElement: HTMLButtonElement` — кнопка закрытия
+
+Методы:
+`set total(value: number): void` — отображает итоговую сумму
+
+События:
+`order-success:close` — закрытие окна успешного заказа

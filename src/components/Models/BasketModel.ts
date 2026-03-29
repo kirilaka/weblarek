@@ -43,11 +43,4 @@ export class BasketModel {
     isProductById(id: string): boolean {
         return this.arrayProduct.some(item => item.id === id)
     }
-
-    getIdsProducts(): string[] {
-        return this.arrayProduct.reduce((acc, item) => {
-            acc.push(item.id);
-            return acc;
-        },[] as string[])
-    }
 }

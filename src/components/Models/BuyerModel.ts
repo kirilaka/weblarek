@@ -1,11 +1,13 @@
 import { IBuyer } from "../../types";
 import { IEvents } from "../base/Events";
 
+type BuyerErrors = Partial<Record<keyof IBuyer, string>>;
+
 interface IBuyerModel {
     setSomeDataBuyer(data: Partial<IBuyer>): void;
     getDataBayer(): IBuyer;
     resetDataBuyer(): void;
-    isValid(): Partial<IBuyer> & {payment?: string} 
+    isValid(): BuyerErrors; 
 };
 
 const initialStateDataBuyer: IBuyer = {
@@ -31,35 +33,34 @@ export class BuyerModel implements IBuyerModel {
 
     resetDataBuyer(): void {
         this.dataBayer = initialStateDataBuyer;
+        this.events.emit('buyer:change')
     };
 
-    isValid(): Partial<IBuyer> & {payment?: string} { 
-        if (!Object.values(this.dataBayer).some(value => value == '')) return {} 
-        const data = Object.entries(this.dataBayer) 
-        const errors = data.reduce((acc, [key, value]) => { 
-            if (!value) { 
-                switch (key) { 
-                    case 'payment': 
-                        value = "Выберите способ оплаты"; 
-                        break; 
-                    case 'email': 
-                        value = "Введите email"; 
-                        break; 
-                    case 'phone': 
-                        value = "Введите номер телефона"; 
-                        break; 
-                    case 'address': 
-                        value = "Выберите адрес"; 
-                        break; 
-                } 
-            } 
-            else {  
-                return acc; 
-            } 
-            acc.push([key, value]); 
-            return acc; 
-        }, [] as [string, string][]); 
- 
-        return Object.fromEntries(errors) 
-    } 
+    isValid(): BuyerErrors { 
+    if (!Object.values(this.dataBayer).some(value => value == '')) return {} 
+    const data = Object.entries(this.dataBayer);
+    const errors = data.reduce((acc, [key, value]) => { 
+        if (!value) { 
+            let message = '';
+            switch (key) { 
+                case 'payment': 
+                    message = "Выберите способ оплаты"; 
+                    break; 
+                case 'email': 
+                    message = "Введите email"; 
+                    break; 
+                case 'phone': 
+                    message = "Введите номер телефона"; 
+                    break; 
+                case 'address': 
+                    message = "Выберите адрес"; 
+                    break; 
+            }
+            acc[key as keyof IBuyer] = message;
+        }
+        return acc; 
+    }, {} as BuyerErrors);
+
+    return errors;
+}
 };
